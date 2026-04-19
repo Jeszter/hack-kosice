@@ -55,7 +55,7 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 ---
 
 ### Home screen
-<img width="1080" height="2340" alt="1" src="https://github.com/user-attachments/assets/c06a376e-8fab-429d-a70d-47268c5fc601" />
+<img width="1280" height="720" alt="1" src="https://github.com/user-attachments/assets/c06a376e-8fab-429d-a70d-47268c5fc601" />
 - Shows **group name**, total **linked bank balance** (real PSD2 data if connected)
 - **Per-member bank balances** — each participant's real account balance from their connected bank (falls back to contributed amount if no bank linked)
 - **Monthly spending limit bar** — progress bar shows how much of the limit has been spent this month (green → red as limit approaches)
@@ -66,14 +66,14 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 - **Join a group** field at the bottom — enter invite code quickly
 
 ### Group Management (Manage button)
-<img width="1080" height="2340" alt="2" src="https://github.com/user-attachments/assets/2b241c90-c014-4db3-b48b-560e0d0e4eb5" />
+<img width="1280" height="720" alt="2" src="https://github.com/user-attachments/assets/2b241c90-c014-4db3-b48b-560e0d0e4eb5" />
 - Set a **monthly spending limit** for the group (e.g. €4,000 limit on a €5,000 balance)
 - See current month's stats: limit / spent / remaining with a progress bar
 - Quick preset amounts: €1,000 / €2,000 / €4,000 / €10,000
 - **Connect Bank** section at the bottom — navigates to PSD2 bank connection
 
 ### Group Detail (See All button)
-<img width="1080" height="2340" alt="зображення" src="https://github.com/user-attachments/assets/6af16d13-26ec-401d-89d4-4a2a4cf3a80e" />
+<img width="1280" height="720" alt="зображення" src="https://github.com/user-attachments/assets/6af16d13-26ec-401d-89d4-4a2a4cf3a80e" />
 - Full member list with real bank balances
 - **Owner can kick members** (red remove button per member, with confirmation dialog)
 - **Non-owners can leave the group** (danger zone, confirmation dialog)
@@ -83,17 +83,17 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 Two tabs:
 
 **Create tab**
-<img width="1080" height="2340" alt="зображення" src="https://github.com/user-attachments/assets/d30f3b33-f232-4f74-b548-f8afbb6f09a6" />
+<img width="1280" height="720" alt="зображення" src="https://github.com/user-attachments/assets/d30f3b33-f232-4f74-b548-f8afbb6f09a6" />
 - Enter group name → create instantly
 - Quick name suggestions: Family, Friends, Work team, Trip 2025, Roommates
 
 **Join tab**
-<img width="1080" height="2340" alt="зображення" src="https://github.com/user-attachments/assets/252b1ea3-2ddb-4b48-8d14-e90009fe15d0" />
+<img width="1280" height="720" alt="зображення" src="https://github.com/user-attachments/assets/252b1ea3-2ddb-4b48-8d14-e90009fe15d0" />
 - Enter **Group ID** (UUID from the invite email) + **6-digit code** (from the same email)
 - Calls `POST /accounts/{id}/members/join-with-code` — invitee joins themselves, no owner action needed
 
 ### Invite Member Flow (owner side)
-<img width="1080" height="2340" alt="зображення" src="https://github.com/user-attachments/assets/c8224cae-24ed-4ea6-b80a-7eae466fc157" />
+<img width="1280" height="720" alt="зображення" src="https://github.com/user-attachments/assets/c8224cae-24ed-4ea6-b80a-7eae466fc157" />
 - Owner goes to: See All → Invite member
 - Enters the invitee's email address (they must have an EquiPay account)
 - Taps "Send invite"
@@ -104,7 +104,7 @@ Two tabs:
 - Owner does **not** need to confirm anything — the invitee joins themselves
 
 ### AI Assistant (central mic button in bottom bar)
-<img width="1080" height="2340" alt="зображення" src="https://github.com/user-attachments/assets/c884efcc-30b4-4704-a823-cd076ca6bf5a" />
+<img width="1280" height="720" alt="зображення" src="https://github.com/user-attachments/assets/c884efcc-30b4-4704-a823-cd076ca6bf5a" />
 The bottom bar mic button opens the full **AI Assistant screen** with:
 
 - **Voice mode** (default) — large central mic button, animated waveform during listening
