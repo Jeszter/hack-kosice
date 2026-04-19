@@ -353,6 +353,6 @@ If any keys were shared in chat, revoke them immediately:
 9. AI confirms → tap the **Split** action button → NewPayment opens pre-filled
 10. Submit → History shows the transaction with per-member split statuses
 11. Insights → Gemini-generated tip based on real spending data
-<img width="1254" height="1254" alt="67" src="https://github.com/user-attachments/assets/8571cebb-7fae-4dd7-a108-bc4c57aeafc1" />
+
 
 
