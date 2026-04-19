@@ -1,0 +1,87 @@
+services:
+  # PostgreSQL database
+  - type: pserv
+    name: equipay-db
+    env: docker
+    runtime: image
+    image:
+      url: postgres:16-alpine
+    disk:
+      name: pg-disk
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 1
+    envVars:
+      - key: POSTGRES_DB
+        value: equipay
+      - key: POSTGRES_USER
+        value: equipay
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+
+  # Redis
+  - type: redis
+    name: equipay-redis
+    ipAllowList: []
+    plan: free
+
+  # Backend API (Web Service)
+  - type: web
+    name: equipay-api
+    env: docker
+    plan: free
+    dockerfilePath: ./backend/docker/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      # Tokens
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ISSUER
+        value: equipay-api
+      - key: JWT_ACCESS_TTL_MIN
+        value: "15"
+      - key: JWT_REFRESH_TTL_DAYS
+        value: "30"
+
+      # DB (Render fills these automatically from the DB service)
+      - key: DB_URL
+        fromDatabase:
+          name: equipay-db
+          property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: equipay-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: equipay-db
+          property: password
+
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: equipay-redis
+          property: connectionString
+
+      # Email — set in Render dashboard AFTER deploy
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: onboarding@resend.dev
+      - key: EMAIL_FROM_NAME
+        value: EquiPay
+
+      # OpenRouter — set in Render dashboard AFTER deploy
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: google/gemini-2.5-flash
+
+      # Tatra banka — set in Render dashboard AFTER deploy
+      - key: TATRA_API_KEY
+        sync: false
+      - key: TATRA_SANDBOX
+        value: "true"

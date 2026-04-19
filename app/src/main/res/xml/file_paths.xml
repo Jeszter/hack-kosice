@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- FileProvider для camera output:
+         ctx.cacheDir соответствует <cache-path name="cache" path="."/>
+         "receipts/" подпапка для чеков, но мы создаём temp-файлы прямо в корне cache -->
+    <cache-path name="cache" path="." />
+    <files-path name="files" path="." />
+</paths>

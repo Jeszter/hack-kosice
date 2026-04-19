@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: equipay-postgres
+    environment:
+      POSTGRES_DB: equipay
+      POSTGRES_USER: equipay
+      POSTGRES_PASSWORD: equipay_dev_pwd
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U equipay"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: equipay-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Dev SMTP — ловит письма если EMAIL_PROVIDER=smtp. UI: http://localhost:8025
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: equipay-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: equipay-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/equipay
+      DB_USER: equipay
+      DB_PASSWORD: equipay_dev_pwd
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8080:8080"
+
+volumes:
+  pg_data:

@@ -1,0 +1,63 @@
+### Register
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "yehor@example.com",
+  "password": "StrongPass123",
+  "fullName": "Yehor Tatarenko"
+}
+
+### Login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "yehor@example.com",
+  "password": "StrongPass123"
+}
+
+### Me
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{token}}
+
+### Create wallet
+POST http://localhost:8080/api/wallets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Trip to Vienna",
+  "currency": "EUR"
+}
+
+### My wallets
+GET http://localhost:8080/api/wallets
+Authorization: Bearer {{token}}
+
+### Add member
+POST http://localhost:8080/api/wallets/1/members
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "alex@example.com"
+}
+
+### Mock bank link
+POST http://localhost:8080/api/bank-connections/mock-link
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "walletId": 1,
+  "bankName": "Tatra banka",
+  "accountName": "Personal account",
+  "iban": "SK1234567890123456789012",
+  "balance": 420.50,
+  "currency": "EUR"
+}
+
+### My bank connections
+GET http://localhost:8080/api/bank-connections
+Authorization: Bearer {{token}}

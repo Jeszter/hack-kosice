@@ -1,0 +1,14 @@
+backend/.env
+.env.local
+.env.production
+
+.gradle/
+build/
+!gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+.idea/
+*.iml
+.DS_Store
+out/
