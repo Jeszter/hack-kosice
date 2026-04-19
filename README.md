@@ -100,7 +100,7 @@ Two tabs:
 - Calls `POST /accounts/{id}/members/join-with-code` — invitee joins themselves, no owner action needed
 
 ### Invite Member Flow (owner side)
-<img width="800" alt="зображення" src="https://github.com/user-attachments/assets/c8224cae-24ed-4ea6-b80a-7eae466fc157" />
+<img width="350" alt="зображення" src="https://github.com/user-attachments/assets/c8224cae-24ed-4ea6-b80a-7eae466fc157" />
 
 - Owner goes to: See All → Invite member
 - Enters the invitee's email address (they must have an EquiPay account)
@@ -112,7 +112,7 @@ Two tabs:
 - Owner does **not** need to confirm anything — the invitee joins themselves
 
 ### AI Assistant (central mic button in bottom bar)
-<img width="800" alt="зображення" src="https://github.com/user-attachments/assets/c884efcc-30b4-4704-a823-cd076ca6bf5a" />
+<img width="350" alt="зображення" src="https://github.com/user-attachments/assets/c884efcc-30b4-4704-a823-cd076ca6bf5a" />
 
 The bottom bar mic button opens the full **AI Assistant screen** with:
 
