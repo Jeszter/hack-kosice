@@ -86,12 +86,14 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 Two tabs:
 
 **Create tab**
+
 <img width="350" alt="зображення" src="https://github.com/user-attachments/assets/d30f3b33-f232-4f74-b548-f8afbb6f09a6" />
 
 - Enter group name → create instantly
 - Quick name suggestions: Family, Friends, Work team, Trip 2025, Roommates
 
 **Join tab**
+
 <img width="350" alt="зображення" src="https://github.com/user-attachments/assets/252b1ea3-2ddb-4b48-8d14-e90009fe15d0" />
 
 - Enter **Group ID** (UUID from the invite email) + **6-digit code** (from the same email)
