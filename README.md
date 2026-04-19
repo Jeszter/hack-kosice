@@ -1,254 +1,338 @@
-# EquiPay v2 — Full Working App
+# EquiPay — Shared Group Finance App
 
-Рабочее приложение для **TatraBank Challenge** — общий групповой счёт с PSD2 open banking, виртуальными картами на участника, AI split через Gemini, голосовым ассистентом. Всё соединено с реальным backend.
+A fully working Android + Ktor backend app built for the **TatraBank Hackathon**. Shared group wallets with PSD2 open banking, per-member virtual cards, AI-powered expense splitting, voice assistant, and receipt scanning.
 
-Монорепа: **Android** (Kotlin + Jetpack Compose) + **Backend** (Ktor + PostgreSQL + Redis, deploy на Render или Docker).
+Monorepo: **Android** (Kotlin + Jetpack Compose) + **Backend** (Ktor + PostgreSQL + Redis).
 
 ---
 
-## 🚀 Быстрый старт (local через Docker)
+## 🚀 Quick Start (local via Docker)
 
 ```bash
 cd backend
 cp .env.example .env
-# Отредактируй .env — добавь свои ключи OpenRouter / Resend / Tatra
+# Edit .env — add your OpenRouter / Resend / Tatra keys
 docker compose up --build
 ```
 
-После старта:
-- API: http://localhost:8080
-- MailHog UI: http://localhost:8025 (видны dev-email коды)
-- Postgres: localhost:5432 · Redis: localhost:6379
+After startup:
+- API: `http://localhost:8080`
+- MailHog UI: `http://localhost:8025` (see email codes in dev)
+- Postgres: `localhost:5432` · Redis: `localhost:6379`
 
-Android приложение в эмуляторе автоматически ходит на `http://10.0.2.2:8080/`.
+The Android app in an emulator automatically hits `http://10.0.2.2:8080/`.
 
 ---
 
-## ☁️ Deploy на Render
+## ☁️ Deploy to Render
 
-1. Залей проект на GitHub
-2. Создай Render Blueprint из корня репо — файл `render.yaml` уже есть
-3. В Render dashboard добавь **sync: false** secrets:
+1. Push the project to GitHub
+2. Create a Render Blueprint from the root — `render.yaml` is already included
+3. In the Render dashboard, add **sync: false** secrets:
    - `RESEND_API_KEY`
    - `OPENROUTER_API_KEY`
    - `TATRA_API_KEY`
-4. Deploy. Render автоматически создаст Postgres + Redis + Web Service, подставит URL'ы через `fromDatabase` / `fromService`
+4. Deploy. Render will auto-create Postgres + Redis + Web Service and inject URLs.
 
-После деплоя обнови `API_BASE_URL` в `app/build.gradle.kts` на свой Render URL:
+After deploy, update `API_BASE_URL` in `app/build.gradle.kts`:
 ```kotlin
-buildConfigField("String", "API_BASE_URL", "\"https://equipay-api.onrender.com/\"")
+buildConfigField("String", "API_BASE_URL", "\"https://your-app.onrender.com/\"")
 ```
 
 ---
 
-## ⚠️ Безопасность
-
-### Что хранится на backend (для хакатона, НЕ для production)
-- Mock last4 виртуальных карт (в проде должен быть card issuer типа Marqeta)
-- IBAN и PSD2 consent tokens в `bank_connections`
-- Балансы групповых счетов в центах (`BIGINT`)
-
-**В production это нарушает PCI DSS.** Нужна интеграция с сертифицированным card issuer и token vault.
-
-### Что делается правильно
-- Пароли и PIN — BCrypt cost 12
-- Refresh tokens в БД только как SHA-256 хеш (сам токен — только в Android EncryptedSharedPreferences)
-- JWT access 15мин / refresh 30 дней с rotation
-- Rate limiting через Redis (login 10/15мин, PIN 5/15мин)
-- Audit log всех auth-событий
-
-### API ключи
-- **НИКОГДА** не коммить `.env` — он в `.gitignore`
-- В Render Dashboard все ключи помечены `sync: false` — их нужно вручную ввести после деплоя
-- `.env.example` содержит пустые placeholder'ы
-
----
-
-## 📱 Что умеет приложение
+## 📱 What the App Can Do
 
 ### Auth flow
-1. Welcome → Sign up (email + password)
-2. Verification code приходит на email (через Resend в prod / MailHog в dev)
-3. PIN setup (6 цифр, BCrypt)
-4. Home
+1. Welcome → Sign up (email + password + optional name)
+2. 6-digit verification code is sent to email (Resend in prod / MailHog in dev)
+3. PIN setup (6 digits, BCrypt hashed)
+4. Home screen
 
-Повторный вход: PIN за 2 секунды, fallback на email+пароль если 5 раз неверный PIN.
-
-### Main features
-- **Групповые счета** — `Trip to Vienna` и т.д. Создание, инвайты по email, свитчер между группами
-- **Virtual cards** — создание через backend, freeze/unfreeze
-- **PSD2 bank connections** — Tatra banka (реальный API sandbox с fallback), SLSP/ČSOB/VÚB (mock consent flow)
-- **Pay & Split** — при клике `Pay & Split` backend:
-  1. Создаёт transaction со split по участникам
-  2. Fan-out: для каждого участника пытается списать с его bank connection
-     - Для Tatra banka — реальный POST на sandbox
-     - Для других — mock success
-  3. Отмечает split статусы (completed/failed)
-  4. Обновляет баланс группы и contributed per user
-- **Smart split (AI)** — `/ai/smart-split` использует Gemini 2.5 Flash через OpenRouter. Анализирует контрибьюции участников и предлагает более справедливый split
-- **Voice Split** — Android SpeechRecognizer записывает речь → POST на `/ai/voice-parse` → Gemini парсит amount/merchant/split/category → Confirm → prefilled NewPaymentScreen
-- **Insights** — `/insights` агрегирует транзакции по неделе + `/ai/insights-hint` даёт реальный совет от Gemini типа "Yehor paid 70% this week"
-- **History** — `/transactions` с группировкой Today / Yesterday
-
-### Global Mic FAB
-Центральная кнопка микрофона теперь **всегда** в BottomBar (Home / Insights / Card / History), а не только на одном экране.
+Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 
 ---
 
-## 🏗 Архитектура
+### Home screen
+- Shows **group name**, total **linked bank balance** (real PSD2 data if connected)
+- **Per-member bank balances** — each participant's real account balance from their connected bank (falls back to contributed amount if no bank linked)
+- **Monthly spending limit bar** — progress bar shows how much of the limit has been spent this month (green → red as limit approaches)
+- **Logout button** in the header
+- Group switcher chips (horizontal scroll, "+ New" at the end)
+- **3 action buttons**: Manage · Create/Join · Insights
+- **Participants section** — shows up to 4 members with real balances, "See all" → full group detail
+- **Join a group** field at the bottom — enter invite code quickly
+
+### Group Management (Manage button)
+- Set a **monthly spending limit** for the group (e.g. €4,000 limit on a €5,000 balance)
+- See current month's stats: limit / spent / remaining with a progress bar
+- Quick preset amounts: €1,000 / €2,000 / €4,000 / €10,000
+- **Connect Bank** section at the bottom — navigates to PSD2 bank connection
+
+### Group Detail (See All button)
+- Full member list with real bank balances
+- **Owner can kick members** (red remove button per member, with confirmation dialog)
+- **Non-owners can leave the group** (danger zone, confirmation dialog)
+- **Invite member** button → InviteMemberScreen
+
+### Create / Join Screen (Create/Join button)
+Two tabs:
+
+**Create tab**
+- Enter group name → create instantly
+- Quick name suggestions: Family, Friends, Work team, Trip 2025, Roommates
+
+**Join tab**
+- Enter **Group ID** (UUID from the invite email) + **6-digit code** (from the same email)
+- Calls `POST /accounts/{id}/members/join-with-code` — invitee joins themselves, no owner action needed
+
+### Invite Member Flow (owner side)
+- Owner goes to: See All → Invite member
+- Enters the invitee's email address (they must have an EquiPay account)
+- Taps "Send invite"
+- Backend emails the invitee with:
+  - The **Group ID** (UUID) to paste into the Join tab
+  - A **6-digit code** that expires in 10 minutes
+- Success screen shows the owner exactly what the invitee should do next
+- Owner does **not** need to confirm anything — the invitee joins themselves
+
+### AI Assistant (central mic button in bottom bar)
+The bottom bar mic button opens the full **AI Assistant screen** with:
+
+- **Voice mode** (default) — large central mic button, animated waveform during listening
+- **Chat mode** — full text chat with message bubbles
+- **Camera mode** — snap a receipt photo → AI reads merchant + amount
+- **Gallery mode** — pick an existing receipt image
+
+The assistant has **full app context**:
+- Knows the current group name, all members, and their balances
+- Sees the last 20 transactions
+- Knows monthly totals and top merchants
+
+**What you can ask:**
+- "Split 45€ for pizza between us" → shows a **Split** action button to go directly to payment
+- "Who owes the most?" → AI answers based on real balance data
+- "What did we spend this month?" → calculated from actual transactions
+- "Go to history" → shows a **Navigate** button that takes you there
+- "Financial tips for our group" → personalized Gemini advice
+- "How do I invite someone?" → explains the flow
+- Language auto-detection — answers in English, Slovak, Russian, Ukrainian, German, Czech
+
+The assistant remembers the last 10 messages (multi-turn conversation).
+
+**Language selector** in the header — choose speech recognition language:
+🇺🇸 English · 🇸🇰 Slovenčina · 🇷🇺 Русский · 🇺🇦 Українська · 🇩🇪 Deutsch
+
+### Voice Split (legacy flow, also accessible)
+- Tap mic → speak → AI parses amount + merchant + split mode
+- Shows confirmation card → Confirm → goes to pre-filled NewPaymentScreen
+
+### Bank Connection (PSD2)
+- Tatra banka: real PSD2 sandbox flow (OAuth consent → real balance)
+- SLSP / ČSOB / VÚB: mock consent flow
+- Connected bank balances appear per-member on the Home screen and Group Detail
+
+### Virtual Cards
+- Create a virtual card per group
+- Freeze / unfreeze
+- Shows last 4 digits
+
+### Transactions
+- **New Payment** — enter amount, merchant, category, split mode (equal / solo / smart AI)
+- **Smart Split** — AI analyzes who contributed less and weights the split accordingly
+- **History** — all transactions grouped by Today / Yesterday with split details per member
+- **Insights** — weekly spending bar chart, top categories, AI-generated group tip
+
+---
+
+## 🔑 API Endpoints
+
+### Auth
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/auth/register` | — |
+| POST | `/auth/verify-email` | — |
+| POST | `/auth/login` | — |
+| POST | `/auth/login-pin` | — |
+| POST | `/auth/pin` | 🔒 |
+| POST | `/auth/refresh` | — |
+| POST | `/auth/logout` | 🔒 |
+
+### Users
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/users/me` | 🔒 |
+| PUT | `/users/me` | 🔒 |
+| GET | `/users/search?q=` | 🔒 |
+| GET | `/users/by-email?email=` | 🔒 |
+
+### Accounts (Groups)
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/accounts` | 🔒 |
+| POST | `/accounts` | 🔒 |
+| GET | `/accounts/{id}` | 🔒 |
+| GET | `/accounts/{id}/linked-balance` | 🔒 |
+| POST | `/accounts/{id}/members` | 🔒 |
+| POST | `/accounts/{id}/members/request-invite` | 🔒 (owner only) |
+| POST | `/accounts/{id}/members/confirm-invite` | 🔒 (owner only) |
+| POST | `/accounts/{id}/members/join-with-code` | 🔒 (invitee) |
+| DELETE | `/accounts/{id}/members/me` | 🔒 |
+| DELETE | `/accounts/{id}/members/{userId}` | 🔒 (owner only) |
+| POST | `/accounts/{id}/add-funds` | 🔒 |
+| GET | `/accounts/{id}/limit` | 🔒 |
+| POST | `/accounts/{id}/limit` | 🔒 |
+
+### Cards
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/cards` | 🔒 |
+| POST | `/cards` | 🔒 |
+| POST | `/cards/{id}/freeze` | 🔒 |
+| GET | `/accounts/{id}/cards` | 🔒 |
+
+### Banks
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/banks/available` | 🔒 |
+| GET | `/banks/connections` | 🔒 |
+| POST | `/banks/tatra/connect/start` | 🔒 |
+| DELETE | `/banks/connections/{id}` | 🔒 |
+
+### Transactions
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/transactions` | 🔒 |
+| POST | `/transactions` | 🔒 |
+| GET | `/transactions/{id}` | 🔒 |
+| GET | `/accounts/{id}/transactions` | 🔒 |
+| GET | `/insights` | 🔒 |
+
+### AI
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/ai/voice-parse` | 🔒 |
+| POST | `/ai/receipt-parse` | 🔒 |
+| POST | `/ai/smart-split` | 🔒 |
+| GET | `/ai/insights-hint` | 🔒 |
+| POST | `/ai/chat` | 🔒 |
+
+🔒 = requires `Authorization: Bearer <access_token>`
+
+---
+
+## 🏗 Architecture
 
 ```
 ┌─────────────────┐  HTTPS/JSON  ┌──────────────────────┐  LLM   ┌─────────────┐
 │  Android App    │─────────────▶│  Ktor backend        │───────▶│ OpenRouter  │
 │  Compose        │              │  - auth (JWT)        │        │ (Gemini 2.5)│
-│  Retrofit       │              │  - accounts          │        └─────────────┘
+│  Retrofit       │              │  - accounts/groups   │        └─────────────┘
 │  StateFlow      │              │  - cards             │        ┌─────────────┐
 │  SpeechRec      │              │  - transactions      │───────▶│ Tatra PSD2  │
-│  EncryptedPrefs │              │  - fanout payments   │  PSD2  │ (real+mock) │
-└─────────────────┘              │  - AI proxy          │        └─────────────┘
-                                 │                      │        ┌─────────────┐
-                                 │  PostgreSQL + Redis  │───────▶│  Resend API │
-                                 └──────────────────────┘  SMTP  └─────────────┘
+│  EncryptedPrefs │              │  - AI chat/parse     │  PSD2  │ (real+mock) │
+└─────────────────┘              │  - invite system     │        └─────────────┘
+                                 │  PostgreSQL + Redis  │        ┌─────────────┐
+                                 └──────────────────────┘  SMTP  │  Resend API │
+                                                                  └─────────────┘
 ```
 
 ### Backend stack
 - Kotlin 2.0.20 + Ktor 2.3.12 (Netty)
 - Exposed ORM + HikariCP + PostgreSQL 16
-- Redis 7 (Jedis) — rate-limit, email codes
-- Ktor Client (CIO) — вызовы OpenRouter / Resend / Tatra
+- Redis 7 (Jedis) — rate limiting, invite codes, email verification
+- Ktor Client (CIO) — OpenRouter / Resend / Tatra API calls
 - JWT (Auth0 java-jwt), BCrypt (jbcrypt)
-- simple-java-mail (fallback SMTP)
+- simple-java-mail (SMTP fallback)
 
 ### Android stack
 - Kotlin 2.0.20 + Jetpack Compose (BOM 2024.09.02)
 - Material3 + Navigation Compose 2.8.0
 - Retrofit 2.11 + OkHttp 4.12 + kotlinx.serialization
 - EncryptedSharedPreferences (Security Crypto 1.1)
-- ViewModel Compose + StateFlow
-- Android SpeechRecognizer
+- ViewModel + StateFlow
+- Android SpeechRecognizer (multi-language)
 
 ---
 
-## 📂 Структура
+## 📂 Project Structure
 
 ```
 EquiPay/
-├── render.yaml                   # Render Blueprint
-├── backend/                      # Ktor API
+├── render.yaml
+├── backend/
 │   ├── .env.example
-│   ├── .gitignore
 │   ├── docker-compose.yml
-│   ├── docker/
-│   │   ├── Dockerfile
-│   │   └── init.sql              # схема БД
-│   ├── build.gradle.kts
-│   └── src/main/
-│       ├── resources/
-│       │   ├── application.conf  # HOCON + ENV override
-│       │   └── logback.xml
-│       └── kotlin/com/equipay/api/
-│           ├── Application.kt
-│           ├── config/AppConfig.kt
-│           ├── db/{Tables, DbFactory}.kt
-│           ├── redis/RedisClient.kt
-│           ├── email/EmailService.kt       # Resend + SMTP
-│           ├── util/Crypto.kt
-│           ├── auth/                       # /auth/*
-│           ├── users/                      # /users/*
-│           ├── accounts/                   # /accounts/*
-│           ├── cards/                      # /cards/*
-│           ├── banks/                      # /banks/* + TatraBankClient
-│           ├── transactions/               # /transactions/* + /insights
-│           └── ai/                         # /ai/* (OpenRouter proxy)
+│   ├── docker/Dockerfile + init.sql
+│   └── src/main/kotlin/com/equipay/api/
+│       ├── Application.kt
+│       ├── accounts/          AccountService.kt, AccountRoutes.kt
+│       ├── ai/                AiService.kt, AiClient.kt
+│       ├── auth/              AuthService.kt, AuthRoutes.kt, JwtService.kt
+│       ├── banks/             BankService.kt, TatraBankClient.kt
+│       ├── cards/             CardService.kt, CardRoutes.kt
+│       ├── email/             EmailService.kt (Resend + SMTP)
+│       ├── transactions/      TransactionService.kt, TransactionRoutes.kt
+│       └── users/             UserService.kt
 │
-└── app/                          # Android Compose
-    ├── build.gradle.kts
-    └── src/main/
-        ├── AndroidManifest.xml
-        ├── res/
-        └── java/com/equipay/app/
-            ├── MainActivity.kt
-            ├── EquiPayApp.kt              # Application class
-            ├── auth/
-            │   ├── TokenStore.kt          # EncryptedSharedPreferences
-            │   ├── AccessTokenHolder.kt
-            │   ├── AuthRepository.kt
-            │   └── SessionViewModel.kt
-            ├── network/
-            │   ├── Dtos.kt, ApiDtos.kt    # request/response DTOs
-            │   ├── AuthApi.kt, Apis.kt    # все Retrofit интерфейсы
-            │   └── ApiClient.kt           # OkHttp + auto-refresh 401
-            ├── navigation/
-            │   ├── Screen.kt
-            │   └── AppNavHost.kt          # guard'ы по SessionState
-            └── ui/
-                ├── theme/                 # Color/Type/Theme
-                ├── components/
-                │   ├── Avatar, SectionLabel, Sparkline
-                │   └── EquiBottomBar       # глобальный mic FAB
-                ├── viewmodels/             # AppState + все VM
-                └── screens/
-                    ├── auth/               # Welcome, SignUp, EmailVerify, Pin, Login, Splash
-                    ├── HomeScreen.kt       # + group switcher + empty state
-                    ├── CreateGroupScreen.kt  # НОВЫЙ
-                    ├── VoiceAssistantScreen.kt  # + SpeechRecognizer
-                    ├── NewPaymentScreen.kt # + prefill от голоса
-                    ├── ConnectBankScreen.kt
-                    ├── VirtualCardScreen.kt
-                    ├── InsightsScreen.kt
-                    └── HistoryScreen.kt
+└── app/src/main/java/com/equipay/app/
+    ├── auth/                  TokenStore, SessionViewModel, AuthRepository
+    ├── network/               ApiClient, Apis, ApiDtos (all DTOs)
+    ├── navigation/            Screen.kt, AppNavHost.kt
+    └── ui/
+        ├── screens/
+        │   ├── auth/          Welcome, SignUp, EmailVerify, Pin, Login, Splash
+        │   ├── HomeScreen.kt
+        │   ├── AiAssistantScreen.kt    ← new full AI chat screen
+        │   ├── VoiceAssistantScreen.kt ← legacy voice-parse flow
+        │   ├── CreateJoinScreen.kt     ← create group / join by code
+        │   ├── GroupDetailScreen.kt    ← full member list, kick, leave
+        │   ├── GroupManageScreen.kt    ← monthly limit + connect bank
+        │   ├── InviteMemberScreen.kt   ← owner sends invite email
+        │   ├── NewPaymentScreen.kt
+        │   ├── ConnectBankScreen.kt
+        │   ├── VirtualCardScreen.kt
+        │   ├── InsightsScreen.kt
+        │   └── HistoryScreen.kt
+        └── viewmodels/
+            ├── HomeViewModel.kt        ← loads balances + limits in parallel
+            └── ViewModels.kt           ← all other VMs
 ```
 
 ---
 
-## 🎬 Demo скрипт на хакатон
+## ⚠️ Security Notes
 
-1. `docker compose up --build` — 30 сек старт
-2. Открой Android эмулятор
-3. Sign up → получи код в MailHog / email → PIN
-4. Home → empty state → **Create group** → "Trip to Vienna" + 2-3 email друзей
-5. Home → Connect Bank → подключи Tatra banka (реальный PSD2 sandbox call!)
-6. Card → Create Virtual Card → получаешь `•••• XXXX`
-7. Tap mic FAB (внизу центр) → скажи "Split 40 euros for pizza between us"
-8. Gemini подтверждает → Confirm → NewPayment уже заполнен
-9. **Pay & Split** → backend делает fanout: Tatra→реальный POST, остальные→mock
-10. History показывает транзакцию со статусами по участникам
-11. Insights показывает Gemini-совет по распределению
+### What's done correctly
+- Passwords and PINs: BCrypt cost 12
+- Refresh tokens stored as SHA-256 hash only (actual token in Android EncryptedSharedPreferences)
+- JWT: 15-minute access token / 30-day refresh with rotation
+- Rate limiting via Redis (login: 10/15min, PIN: 5/15min)
+- Invite codes: stored in Redis with 10-minute expiry, rate-limited to 5 attempts
 
----
+### Hackathon shortcuts (not for production)
+- Mock last4 for virtual cards (real production needs a certified card issuer like Marqeta)
+- IBAN and PSD2 consent tokens stored in plain DB (needs a token vault)
+- Group balances in cents as BIGINT (fine for demo, needs audit trail in prod)
 
-## 🔑 API Endpoints reference
-
-### Auth
-- `POST /auth/register` · `POST /auth/verify-email` · `POST /auth/login` · `POST /auth/login-pin` · `POST /auth/pin` 🔒 · `POST /auth/refresh` · `POST /auth/logout` · `GET /auth/me`
-
-### Users
-- `GET /users/me` 🔒 · `PUT /users/me` 🔒 · `GET /users/search?q=` 🔒 · `GET /users/by-email?email=` 🔒
-
-### Accounts (groups)
-- `GET /accounts` 🔒 · `POST /accounts` 🔒 · `GET /accounts/{id}` 🔒 · `POST /accounts/{id}/members` 🔒 · `POST /accounts/{id}/add-funds` 🔒
-
-### Cards
-- `GET /cards` 🔒 · `POST /cards` 🔒 · `POST /cards/{id}/freeze` 🔒 · `GET /accounts/{id}/cards` 🔒
-
-### Banks
-- `GET /banks/available` 🔒 · `GET /banks/connections` 🔒 · `POST /banks/connect` 🔒 · `DELETE /banks/connections/{id}` 🔒
-
-### Transactions
-- `GET /transactions` 🔒 · `POST /transactions` 🔒 · `GET /transactions/{id}` 🔒 · `GET /accounts/{id}/transactions` 🔒 · `GET /insights` 🔒
-
-### AI
-- `POST /ai/voice-parse` 🔒 · `POST /ai/smart-split` 🔒 · `GET /ai/insights-hint` 🔒
-
-🔒 = требует `Authorization: Bearer <access_token>`
+### API keys — ROTATE THESE
+If any keys were shared in chat, revoke them immediately:
+- https://openrouter.ai/settings/keys
+- https://resend.com/api-keys
+- Tatra banka dev portal
 
 ---
 
-## ⚠️ ВАЖНО: Роти свои ключи
+## 🎬 Hackathon Demo Script
 
-Ключи, которые ты запостил в чате, **скомпрометированы**:
-- https://openrouter.ai/settings/keys → revoke
-- https://resend.com/api-keys → revoke
-- Tatra banka dev portal → revoke
-
-Создай новые и подставь в `.env` (local) и Render Dashboard (prod).
+1. `docker compose up --build` — starts in ~30 seconds
+2. Open Android emulator
+3. Sign up → check MailHog at `localhost:8025` for the code → enter PIN
+4. Home (empty state) → tap **Create/Join** → Create tab → "Trip to Vienna"
+5. Home → **See all** → **Invite member** → enter a second account's email
+6. Second account opens EquiPay → **Create/Join** → **Join tab** → paste Group ID + code from email
+7. Home → **Manage** → **Connect Bank** → connect Tatra banka (real PSD2 sandbox!)
+8. Tap the mic button (bottom center) → say "Split 40 euros for pizza between us"
+9. AI confirms → tap the **Split** action button → NewPayment opens pre-filled
+10. Submit → History shows the transaction with per-member split statuses
+11. Insights → Gemini-generated tip based on real spending data
