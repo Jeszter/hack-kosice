@@ -55,7 +55,7 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 ---
 
 ### Home screen
-<img width="800" alt="1" src="https://github.com/user-attachments/assets/c06a376e-8fab-429d-a70d-47268c5fc601" />
+<img width="350" alt="1" src="https://github.com/user-attachments/assets/c06a376e-8fab-429d-a70d-47268c5fc601" />
 
 - Shows **group name**, total **linked bank balance** (real PSD2 data if connected)
 - **Per-member bank balances** — each participant's real account balance from their connected bank (falls back to contributed amount if no bank linked)
@@ -67,7 +67,7 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 - **Join a group** field at the bottom — enter invite code quickly
 
 ### Group Management (Manage button)
-<img width="800" alt="2" src="https://github.com/user-attachments/assets/2b241c90-c014-4db3-b48b-560e0d0e4eb5" />
+<img width="350" alt="2" src="https://github.com/user-attachments/assets/2b241c90-c014-4db3-b48b-560e0d0e4eb5" />
 
 - Set a **monthly spending limit** for the group (e.g. €4,000 limit on a €5,000 balance)
 - See current month's stats: limit / spent / remaining with a progress bar
@@ -75,7 +75,7 @@ Re-login: PIN in 2 seconds, fallback to email+password if PIN fails 5 times.
 - **Connect Bank** section at the bottom — navigates to PSD2 bank connection
 
 ### Group Detail (See All button)
-<img width="800" alt="зображення" src="https://github.com/user-attachments/assets/6af16d13-26ec-401d-89d4-4a2a4cf3a80e" />
+<img width="350" alt="зображення" src="https://github.com/user-attachments/assets/6af16d13-26ec-401d-89d4-4a2a4cf3a80e" />
 
 - Full member list with real bank balances
 - **Owner can kick members** (red remove button per member, with confirmation dialog)
