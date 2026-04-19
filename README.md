@@ -1,4 +1,5 @@
 # EquiPay — Shared Group Finance App
+<img width="1280" height="720" alt="изображение" src="https://github.com/user-attachments/assets/fb1ecc0c-36dd-4e45-a595-3c7e8f48091c" />
 
 A fully working Android + Ktor backend app built for the **TatraBank Hackathon**. Shared group wallets with PSD2 open banking, per-member virtual cards, AI-powered expense splitting, voice assistant, and receipt scanning.
 
